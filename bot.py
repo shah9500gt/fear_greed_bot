@@ -1,28 +1,35 @@
-from telegram import Bot
-from telegram.constants import ParseMode
+import logging
 import requests
+from telegram import Update, ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import asyncio
 
-# Aapka bot token aur chat ID
-TOKEN = "6184729036:AAHGFN2L-Jb3DfBoUuTmUPXrJ_jU_xxS0xE"
-CHAT_ID = "6092997199"
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-async def start(update, context):
-    await update.message.reply_text("Bot is alive!")
+TOKEN = '7192436665:AAFx0pqUqYC3ji9MOpb2yF8o_DFDUzImMbA'
+CHAT_ID = '7203772674'
 
-async def index(update, context):
-    url = "https://api.alternative.me/fng/"
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text('Hi! Mai aapka Fear and Greed Index bot hoon.')
+
+async def fetch_fear_greed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
-        response = requests.get(url, timeout=3)
+        response = requests.get('https://api.alternative.me/fng/')
         data = response.json()
         value = data["data"][0]["value"]
         label = data["data"][0]["value_classification"]
         msg = f"*Fear & Greed Index:* {value}\n*Status:* {label}"
-        await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+        await context.bot.send_message(chat_id=CHAT_ID, text=msg, parse_mode=ParseMode.MARKDOWN)
     except:
-        await update.message.reply_text("Failed to fetch data.")
+        await update.message.reply_text("Data fetch karte waqt koi masla aaya.")
 
-app = ApplicationBuilder().token(TOKEN).build()
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("index", index))
-app.run_polling()
+async def main() -> None:
+    application = ApplicationBuilder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("feargreed", fetch_fear_greed))
+    await application.run_polling()
+
+if __name__ == "__main__":
+    asyncio.run(main())
